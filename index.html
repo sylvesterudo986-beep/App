@@ -1942,6 +1942,7 @@ footer .logo { font-size:17px; margin-bottom:10px; display:block; }
     <div class="sh">Past Questions Bank</div>
     <p class="sh-sub">Practice real WAEC, JAMB &amp; NECO questions with explanations</p>
 
+    <!-- Setup card -->
     <div class="card" style="margin-bottom:18px;">
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
         <button onclick="setPQExam('WAEC',this)" id="pq-w" class="btn btn-secondary" style="padding:8px 18px;">WAEC</button>
@@ -1953,15 +1954,31 @@ footer .logo { font-size:17px; margin-bottom:10px; display:block; }
           <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;">Subject</label>
           <input id="pq-subj" class="inp" style="margin:0;" placeholder="e.g. Mathematics">
         </div>
-        <button onclick="loadPQ()" class="btn btn-primary" style="padding:12px 22px;">Load Question</button>
+        <button onclick="startPQSession()" class="btn btn-primary" style="padding:12px 22px;">Start Practice</button>
       </div>
     </div>
 
-    <div id="pq-loading" style="display:none;" class="card" style="text-align:center;padding:28px;">
-      <div class="spinner" style="margin:0 auto 10px;"></div>
-      <p style="color:var(--muted);">Loading question...</p>
+    <!-- Score bar (shown during session) -->
+    <div id="pq-scorebar" style="display:none;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;gap:14px;align-items:center;">
+          <span style="font-size:13px;font-weight:700;color:var(--success);">✅ <span id="pq-correct-count">0</span> Correct</span>
+          <span style="font-size:13px;font-weight:700;color:var(--danger);">❌ <span id="pq-wrong-count">0</span> Wrong</span>
+          <span style="font-size:13px;font-weight:600;color:var(--muted);">🔥 Streak: <span id="pq-streak">0</span></span>
+        </div>
+        <span style="font-size:12px;color:var(--muted);" id="pq-progress-label">Q 1 of 0</span>
+      </div>
+      <div style="background:var(--border);border-radius:9999px;height:7px;overflow:hidden;">
+        <div id="pq-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),var(--teal));border-radius:9999px;transition:width .4s ease;width:0%;"></div>
+      </div>
     </div>
 
+    <div id="pq-loading" style="display:none;text-align:center;padding:28px;" class="card">
+      <div class="spinner" style="margin:0 auto 10px;"></div>
+      <p style="color:var(--muted);">Loading questions...</p>
+    </div>
+
+    <!-- Question card -->
     <div id="pq-display" style="display:none;" class="card" style="border-color:var(--accent);">
       <div style="display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
         <span class="badge badge-blue" id="pq-b1">WAEC</span>
@@ -1970,8 +1987,38 @@ footer .logo { font-size:17px; margin-bottom:10px; display:block; }
       <p id="pq-q" style="font-size:1rem;line-height:1.7;margin-bottom:18px;font-weight:600;"></p>
       <div id="pq-opts"></div>
       <div id="pq-expl" style="display:none;margin-top:14px;padding:13px;background:rgba(13,148,136,.07);border-radius:var(--radius);border-left:3px solid var(--teal);font-size:13.5px;line-height:1.6;"></div>
-      <button onclick="loadPQ()" id="pq-next" class="btn btn-primary" style="display:none;margin-top:14px;">Next Question</button>
+      <button onclick="nextPQ()" id="pq-next" class="btn btn-primary" style="display:none;margin-top:14px;width:100%;">Next Question ➜</button>
     </div>
+
+    <!-- Results summary card -->
+    <div id="pq-results" style="display:none;" class="card" style="text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:8px;" id="pq-res-emoji">🎉</div>
+      <div style="font-family:'Lora',serif;font-size:1.4rem;font-weight:700;margin-bottom:6px;" id="pq-res-title">Round Complete!</div>
+      <div style="color:var(--muted);font-size:13.5px;margin-bottom:20px;" id="pq-res-sub"></div>
+      <div style="display:flex;justify-content:center;gap:18px;margin-bottom:22px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--success);" id="pq-res-correct">0</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Correct</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--danger);" id="pq-res-wrong">0</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Wrong</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--accent);" id="pq-res-pct">0%</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Score</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:2rem;font-weight:800;color:var(--warn);" id="pq-res-streak">0</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Best Streak</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="startPQSession()" class="btn btn-primary">Play Again 🔄</button>
+        <button onclick="document.getElementById('pq-results').style.display='none';document.getElementById('pq-scorebar').style.display='none';" class="btn btn-ghost">Change Subject</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -3049,8 +3096,10 @@ async function clearChatHistory(){
 }
 
 // ============================================================
-// PAST QUESTIONS
+// PAST QUESTIONS — session-based, no repeats, score + streak
 // ============================================================
+let pqExam="WAEC", pqQueue=[], pqIndex=0, pqCorrect=0, pqWrong=0, pqStreak=0, pqBestStreak=0;
+
 function setPQExam(exam,el){
   pqExam=exam;
   document.getElementById("pq-w").className="btn "+(exam==="WAEC"?"btn-secondary":"btn-ghost");
@@ -3059,54 +3108,133 @@ function setPQExam(exam,el){
   if(pqn) pqn.className="btn "+(exam==="NECO"?"btn-secondary":"btn-ghost");
 }
 
-async function loadPQ(){
+function pqShuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+async function startPQSession(){
   const subj=document.getElementById("pq-subj").value.trim();
   if(!subj) return toast("Please enter a subject","warning");
   document.getElementById("pq-display").style.display="none";
+  document.getElementById("pq-results").style.display="none";
   document.getElementById("pq-loading").style.display="block";
-  document.getElementById("pq-next").style.display="none";
+  document.getElementById("pq-scorebar").style.display="none";
   try{
     const r=await fetch(`${API}/past-questions/${encodeURIComponent(pqExam)}/${encodeURIComponent(subj)}`);
     const d=await r.json();
     document.getElementById("pq-loading").style.display="none";
     const list=Array.isArray(d)?d:[];
-    if(!list.length) return toast("No questions found. Try another subject.","warning");
-    const q=list[Math.floor(Math.random()*list.length)];
-    document.getElementById("pq-b1").textContent=pqExam;
-    document.getElementById("pq-b2").textContent=q.year?`Year: ${q.year}`:"AI Generated";
-    document.getElementById("pq-q").textContent=q.question_text;
-    document.getElementById("pq-expl").style.display="none";
-    document.getElementById("pq-opts").innerHTML=["a","b","c","d"].map(o=>`<button class="opt" onclick="answerPQ('${o.toUpperCase()}','${(q.correct_answer||"A").toUpperCase()}','${(q.explanation||"").replace(/'/g,"\\'")}',this)">${o.toUpperCase()}) ${q["option_"+o]||""}</button>`).join("");
-    document.getElementById("pq-display").style.display="block";
-  }catch(e){ document.getElementById("pq-loading").style.display="none"; toast("Failed to load question","error"); }
+    if(!list.length) return toast("No questions found for that subject. Try another.","warning");
+    pqQueue=pqShuffle([...list]);
+    pqIndex=0; pqCorrect=0; pqWrong=0; pqStreak=0; pqBestStreak=0;
+    document.getElementById("pq-scorebar").style.display="block";
+    pqUpdateScorebar();
+    pqShowQuestion();
+  }catch(e){
+    document.getElementById("pq-loading").style.display="none";
+    toast("Failed to load questions","error");
+  }
+}
+
+function pqUpdateScorebar(){
+  document.getElementById("pq-correct-count").textContent=pqCorrect;
+  document.getElementById("pq-wrong-count").textContent=pqWrong;
+  document.getElementById("pq-streak").textContent=pqStreak;
+  document.getElementById("pq-progress-label").textContent=`Q ${pqIndex+1} of ${pqQueue.length}`;
+  const pct=pqQueue.length?Math.round((pqIndex/pqQueue.length)*100):0;
+  document.getElementById("pq-progress-bar").style.width=pct+"%";
+}
+
+function pqShowQuestion(){
+  if(pqIndex>=pqQueue.length){ pqShowResults(); return; }
+  const q=pqQueue[pqIndex];
+  pqUpdateScorebar();
+  document.getElementById("pq-b1").textContent=pqExam;
+  document.getElementById("pq-b2").textContent=q.year?`Year: ${q.year}`:"Practice";
+  document.getElementById("pq-q").textContent=q.question_text;
+  document.getElementById("pq-expl").style.display="none";
+  document.getElementById("pq-next").style.display="none";
+  const safeExpl=(q.explanation||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/\n/g," ");
+  const correct=(q.correct_answer||"A").toUpperCase();
+  document.getElementById("pq-opts").innerHTML=["a","b","c","d"].map(o=>`
+    <button class="opt" onclick="answerPQ('${o.toUpperCase()}','${correct}','${safeExpl}',this)">
+      <strong style="margin-right:8px;">${o.toUpperCase()})</strong>${q["option_"+o]||""}
+    </button>`).join("");
+  document.getElementById("pq-display").style.display="block";
+  document.getElementById("pq-display").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function nextPQ(){
+  pqIndex++;
+  pqShowQuestion();
 }
 
 function answerPQ(sel,correct,expl,btn){
   document.querySelectorAll("#pq-opts .opt").forEach(b=>b.disabled=true);
-  if(sel===correct){ btn.classList.add("correct"); toast("Correct!","success"); }
-  else{
+  const isCorrect=sel===correct;
+  if(isCorrect){
+    btn.classList.add("correct");
+    pqCorrect++; pqStreak++;
+    if(pqStreak>pqBestStreak) pqBestStreak=pqStreak;
+    toast(pqStreak>1?`Correct! 🔥 ${pqStreak} in a row!`:"Correct! ✅","success");
+  } else {
     btn.classList.add("wrong");
+    pqStreak=0;
     const map={A:0,B:1,C:2,D:3};
     const btns=document.querySelectorAll("#pq-opts .opt");
     if(btns[map[correct]]) btns[map[correct]].classList.add("correct");
-    toast(`Wrong! Correct: ${correct}`,"error");
+    pqWrong++;
+    toast(`Wrong! Correct answer: ${correct}`,"error");
   }
+  document.getElementById("pq-correct-count").textContent=pqCorrect;
+  document.getElementById("pq-wrong-count").textContent=pqWrong;
+  document.getElementById("pq-streak").textContent=pqStreak;
   if(expl){
     const e=document.getElementById("pq-expl");
-    e.innerHTML=`Explanation: ${expl}<div style="margin-top:8px;display:flex;gap:8px;">
+    e.innerHTML=`<strong>Explanation:</strong> ${expl}<div style="margin-top:8px;display:flex;gap:8px;">
       <button class="bubble-btn speak-btn" onclick="speakText('${expl.replace(/'/g,"\\'")}')">
-        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
-        Speak
+        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg> Speak
       </button>
       <button class="bubble-btn" onclick="stopSpeaking()">
-        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-        Stop
+        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> Stop
       </button>
     </div>`;
     e.style.display="block";
     speakText(expl);
   }
+  const isLast=pqIndex>=pqQueue.length-1;
+  document.getElementById("pq-next").textContent=isLast?"See Results 🏆":"Next Question ➜";
   document.getElementById("pq-next").style.display="block";
+}
+
+function pqShowResults(){
+  document.getElementById("pq-display").style.display="none";
+  const total=pqCorrect+pqWrong;
+  const pct=total?Math.round((pqCorrect/total)*100):0;
+  const emoji=pct>=80?"🏆":pct>=60?"🎉":pct>=40?"💪":"📚";
+  const title=pct>=80?"Excellent Work!":pct>=60?"Great Job!":pct>=40?"Good Effort!":"Keep Practising!";
+  const sub=`You scored ${pct}% on ${pqExam} ${document.getElementById("pq-subj").value.trim()}`;
+  document.getElementById("pq-res-emoji").textContent=emoji;
+  document.getElementById("pq-res-title").textContent=title;
+  document.getElementById("pq-res-sub").textContent=sub;
+  document.getElementById("pq-res-correct").textContent=pqCorrect;
+  document.getElementById("pq-res-wrong").textContent=pqWrong;
+  document.getElementById("pq-res-pct").textContent=pct+"%";
+  document.getElementById("pq-res-streak").textContent=pqBestStreak;
+  document.getElementById("pq-progress-bar").style.width="100%";
+  document.getElementById("pq-progress-label").textContent=`Done! ${pqQueue.length} of ${pqQueue.length}`;
+  document.getElementById("pq-results").style.display="block";
+  document.getElementById("pq-results").scrollIntoView({behavior:"smooth"});
+  if(CU && pct>0){
+    fetch(`${API}/quiz/save-result`,{method:"POST",headers:hdrs(),body:JSON.stringify({
+      username:CU,subject:document.getElementById("pq-subj").value.trim(),
+      level:pqExam,topic:pqExam+" Past Questions",score:pqCorrect,total_questions:total
+    })}).catch(()=>{});
+  }
 }
 
 // ============================================================
